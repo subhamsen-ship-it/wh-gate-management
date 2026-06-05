@@ -1,5 +1,5 @@
 const GAS_URL =
-  "https://script.google.com/a/macros/apnamart.in/s/AKfycbzb2MiKcHHHTs5DiMhpjeoRWWozXTFO6O7L9fnm6TKc9PwmqmLd7PdvQ27CTTnKVxy3pw/exec";
+  "https://script.google.com/a/macros/apnamart.in/s/AKfycbxrgWtVB8uM0aTkxlz_S10nfPNPdShty5MDWnlA5gfZGvjMekWmi3DntHfwJLiJuaKjKw/exec";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
