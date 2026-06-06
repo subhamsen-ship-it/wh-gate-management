@@ -144,6 +144,13 @@ input.err-b{border-color:#c62828;background:#fff8f8}
 .ri-tok{font-size:44px;font-weight:900;text-align:center;letter-spacing:3px;margin:10px 0;color:#c0392b}
 /* Admin */
 .mg{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px}
+.f-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.f-btn{background:#f0f2f5;border:1.5px solid #e0e0e0;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:#555;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.f-btn.active{background:#1a3a2a;color:#fff;border-color:#1a3a2a;}
+.f-range{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1.5px solid #e0e0e0;border-radius:12px;padding:10px 14px;}
+.f-range input[type=date]{border:1.5px solid #e0e0e0;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#1a1a2e;background:#fafafa;min-width:130px;}
+.f-range button{background:#1a3a2a;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.f-lbl{color:#555;font-size:12px;font-weight:600;}
 /* ── Admin light theme ── */
 #screen-admin{background:#F0F2F7}
 #screen-admin .topbar{background:#fff;border-bottom:1px solid #E2E8F0}
@@ -311,6 +318,20 @@ input.err-b{border-color:#c62828;background:#fff8f8}
         <span id="adm-src" style="color:var(--grn);">—</span>
         <span id="next-refresh-label" style="color:var(--mut);font-size:10px;">Next refresh in <span id="next-refresh-text" style="font-weight:700;color:#1a3a2a;">—</span></span>
       </div>
+      <div class="f-bar">
+        <button class="f-btn active" id="f-today"  onclick="setAdmFilter('today')">Today</button>
+        <button class="f-btn"        id="f-week"   onclick="setAdmFilter('week')">This Week</button>
+        <button class="f-btn"        id="f-month"  onclick="setAdmFilter('month')">This Month</button>
+        <button class="f-btn"        id="f-all"    onclick="setAdmFilter('all')">All Time</button>
+        <button class="f-btn"        id="f-custom" onclick="setAdmFilter('custom')">📅 Custom</button>
+      </div>
+      <div class="f-range" id="adm-custom-range" style="display:none;">
+        <span class="f-lbl">From</span>
+        <input type="date" id="f-from">
+        <span class="f-lbl">To</span>
+        <input type="date" id="f-to">
+        <button onclick="applyCustomFilter()">Apply</button>
+      </div>
       <div class="mg" id="adm-metrics"></div>
       <div class="wc"  id="adm-whcards"></div>
       <div class="cr">
@@ -352,7 +373,8 @@ const CFG = {
 const S = {
   wh: null, tokens: [], vmap: {}, whList: [],
   sel: {}, prev: null, live: false,
-  refreshTimer: null, countdownTimer: null, countdownSecs: 0
+  refreshTimer: null, countdownTimer: null, countdownSecs: 0,
+  admFilter: 'today', admFrom: null, admTo: null
 };
 
 /* ── WH Config with gradient backgrounds ── */
@@ -705,13 +727,59 @@ function mkRes(icon,sub,tok,color,status,rows,rstFn,btnLbl,btnCls){
 /* ════════════════════════════════════════════════
    ADMIN RENDER
 ════════════════════════════════════════════════ */
+function getAdmLabel() {
+  if (S.admFilter==='today') return 'Today';
+  if (S.admFilter==='week')  return 'This Week';
+  if (S.admFilter==='month') return 'This Month';
+  if (S.admFilter==='custom' && S.admFrom && S.admTo) return S.admFrom+' → '+S.admTo;
+  return 'All Time';
+}
+function getFilteredTokens() {
+  var now = new Date();
+  return S.tokens.filter(function(t) {
+    if (!t.gateIn) return true;
+    var d = new Date(t.gateIn);
+    if (S.admFilter === 'today') {
+      return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+    }
+    if (S.admFilter === 'week') {
+      var day = now.getDay(), diff = now.getDate() - day + (day===0?-6:1);
+      var mon = new Date(now); mon.setDate(diff); mon.setHours(0,0,0,0);
+      return d >= mon;
+    }
+    if (S.admFilter === 'month') {
+      return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+    }
+    if (S.admFilter === 'custom' && S.admFrom && S.admTo) {
+      var from = new Date(S.admFrom); from.setHours(0,0,0,0);
+      var to   = new Date(S.admTo);   to.setHours(23,59,59,999);
+      return d >= from && d <= to;
+    }
+    return true;
+  });
+}
+function setAdmFilter(f) {
+  S.admFilter = f;
+  ['today','week','month','all','custom'].forEach(function(k){
+    var el = document.getElementById('f-'+k);
+    if (el) el.classList.toggle('active', k===f);
+  });
+  document.getElementById('adm-custom-range').style.display = (f==='custom') ? 'flex' : 'none';
+  if (f !== 'custom') renderAdminUI();
+}
+function applyCustomFilter() {
+  S.admFrom = document.getElementById('f-from').value;
+  S.admTo   = document.getElementById('f-to').value;
+  if (!S.admFrom || !S.admTo) { toast_('⚠️ Select both dates'); return; }
+  renderAdminUI();
+}
 function renderAdminUI() {
-  document.getElementById("adm-ts").textContent = new Date().toLocaleTimeString("en-IN");
+  document.getElementById("adm-ts").textContent = new Date().toLocaleTimeString("en-IN") + ' · ' + getAdmLabel();
   if (!document.getElementById("adm-src").textContent || document.getElementById("adm-src").textContent === "—") {
     document.getElementById("adm-src").textContent = S.live ? "Cached" : "Demo mode";
   }
 
-  var all = S.tokens;
+  var all = getFilteredTokens();
   var byWH = function(wh){ return all.filter(function(t){ return t.wh===wh }); };
   var inYard = all.filter(function(t){ return t.status==="ACTIVE" }).length;
   var exited = all.filter(function(t){ return t.status==="CLOSED" }).length;
