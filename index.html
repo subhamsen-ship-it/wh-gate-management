@@ -383,9 +383,9 @@ const VRE = /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$/i;
 async function apiGet(action, extra) {
   if (!S.live) return null;
   try {
-    let url = CFG.WEB_APP_URL + "?action=" + encodeURIComponent(action);
+    let url = CFG.WEB_APP_URL + "?action=" + encodeURIComponent(action) + "&_t=" + Date.now();
     if (extra) Object.keys(extra).forEach(function(k){ url += "&" + encodeURIComponent(k) + "=" + encodeURIComponent(extra[k]||""); });
-    const resp = await fetch(url, {method:"GET", redirect:"follow"});
+    const resp = await fetch(url, {method:"GET", redirect:"follow", cache:"no-store"});
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const data = JSON.parse(await resp.text());
     if (!data.success) { console.error("API err:", data.error); return null; }
@@ -562,6 +562,13 @@ function pickWH(wh){
   document.getElementById("gi-head").textContent="GATE IN — "+wh;
   document.getElementById("go-head").textContent="GATE OUT — "+wh;
   showScr("ops");switchTab("gate-in");updStrip();resetAll();
+  if(S.live){
+    document.getElementById("gi-vnd-list").innerHTML='<div class="dd-mt">Loading vendors...</div>';
+    apiGet("getVendors").then(function(v){
+      if(v&&v.vendorMap&&Object.keys(v.vendorMap).length>0){S.vmap=v.vendorMap;setBadge("✅ Live","conn-ok");}
+      loadVndDD();
+    }).catch(function(){loadVndDD();});
+  }
 }
 
 function updStrip(){
@@ -606,7 +613,15 @@ function loadVndDD(){
   var vendors=S.vmap[S.wh]||[];
   document.getElementById("gi-vnd-list").innerHTML=vendors.length
     ?vendors.map(function(v){return'<div class="dd-item" onclick="pickVnd(\''+eq(v)+'\')">'+v+"</div>"}).join("")
-    :'<div class="dd-mt">No vendors for this warehouse</div>';
+    :'<div class="dd-mt">No vendors found. <span style="color:#6366f1;text-decoration:underline;cursor:pointer;" onclick="retryVendors()">Tap to retry</span></div>';
+}
+function retryVendors(){
+  if(!S.live){loadVndDD();return;}
+  document.getElementById("gi-vnd-list").innerHTML='<div class="dd-mt">Loading vendors...</div>';
+  apiGet("getVendors").then(function(v){
+    if(v&&v.vendorMap&&Object.keys(v.vendorMap).length>0){S.vmap=v.vendorMap;setBadge("✅ Live","conn-ok");}
+    loadVndDD();
+  }).catch(function(){loadVndDD();});
 }
 function pickVnd(v){S.sel["gi-vnd"]=v;document.getElementById("gi-vnd-lbl").textContent=v;document.getElementById("gi-vnd-t").classList.add("v");document.getElementById("gi-vnd-menu").classList.remove("open");}
 function onVeh(el){
