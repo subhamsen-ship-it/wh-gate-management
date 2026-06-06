@@ -10,16 +10,17 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px;-webkit-font-smoothing:antialiased}
+html{height:-webkit-fill-available}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px;-webkit-font-smoothing:antialiased;min-height:-webkit-fill-available}
 :root{
   --bg:#f0f2f5;--surf:#ffffff;--card:#ffffff;--bdr:#e0e0e0;
   --acc:#1a3a2a;--grn:#2e7d32;--amb:#e8b84b;--red:#c62828;--pur:#6d28d9;
   --txt:#1a1a2e;--mut:#555555;--sub:#888888
 }
-#app{height:100vh;display:flex;flex-direction:column;overflow:hidden;background:#f0f2f5}
-.screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f0f2f5}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0}
 .screen.active{display:flex}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:90px;background:#f0f2f5}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:90px;background:#f0f2f5;min-height:0}
 .pad{padding:16px}
 input{background:#fafafa;border:1.5px solid #e0e0e0;border-radius:12px;padding:18px 16px;color:#1a1a2e;font-size:18px;width:100%;font-family:'Segoe UI',Arial,sans-serif;outline:none;transition:border-color .15s,background .15s;-webkit-appearance:none}
 input:focus{border-color:#1a3a2a;background:#fff;box-shadow:0 0 0 3px rgba(26,58,42,0.08)}
