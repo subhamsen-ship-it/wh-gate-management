@@ -151,6 +151,7 @@ input.err-b{border-color:#c62828;background:#fff8f8}
 .f-range input[type=date]{border:1.5px solid #e0e0e0;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#1a1a2e;background:#fafafa;min-width:130px;}
 .f-range button{background:#1a3a2a;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .f-lbl{color:#555;font-size:12px;font-weight:600;}
+.wh-sel{background:#fff;border:1.5px solid #e0e0e0;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:#1a3a2a;font-family:inherit;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
 /* ── Admin light theme ── */
 #screen-admin{background:#F0F2F7}
 #screen-admin .topbar{background:#fff;border-bottom:1px solid #E2E8F0}
@@ -324,6 +325,13 @@ input.err-b{border-color:#c62828;background:#fff8f8}
         <button class="f-btn"        id="f-month"  onclick="setAdmFilter('month')">This Month</button>
         <button class="f-btn"        id="f-all"    onclick="setAdmFilter('all')">All Time</button>
         <button class="f-btn"        id="f-custom" onclick="setAdmFilter('custom')">📅 Custom</button>
+        <select class="wh-sel" id="adm-wh-sel" onchange="setAdmWH(this.value)">
+          <option value="all">🏭 All WH</option>
+          <option value="KOL">KOL — Kolkata</option>
+          <option value="RNC">RNC — Ranchi</option>
+          <option value="RPR">RPR — Raipur</option>
+          <option value="PAT">PAT — Patna</option>
+        </select>
       </div>
       <div class="f-range" id="adm-custom-range" style="display:none;">
         <span class="f-lbl">From</span>
@@ -374,7 +382,7 @@ const S = {
   wh: null, tokens: [], vmap: {}, whList: [],
   sel: {}, prev: null, live: false,
   refreshTimer: null, countdownTimer: null, countdownSecs: 0,
-  admFilter: 'today', admFrom: null, admTo: null
+  admFilter: 'today', admFrom: null, admTo: null, admWH: 'all'
 };
 
 /* ── WH Config with gradient backgrounds ── */
@@ -737,6 +745,9 @@ function getAdmLabel() {
 function getFilteredTokens() {
   var now = new Date();
   return S.tokens.filter(function(t) {
+    // WH filter
+    if (S.admWH !== 'all' && t.wh !== S.admWH) return false;
+    // Date filter
     if (!t.gateIn) return true;
     var d = new Date(t.gateIn);
     if (S.admFilter === 'today') {
@@ -757,6 +768,10 @@ function getFilteredTokens() {
     }
     return true;
   });
+}
+function setAdmWH(wh) {
+  S.admWH = wh;
+  renderAdminUI();
 }
 function setAdmFilter(f) {
   S.admFilter = f;
